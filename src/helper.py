@@ -8,13 +8,15 @@ data_path_ = "../data/"
 
 
 def read_xls_file(file_name):
-    if path.exists(data_path_ + file_name[:-3] + "cvs"):
-        return pd.read_csv(data_path_ + file_name[:-3] + "cvs", header=None, low_memory=False)
+    if path.exists(data_path_ + file_name[:-3] + "csv"):
+        df = pd.read_csv(data_path_ + file_name[:-3] + "csv", header=None, low_memory=False)
+        return df, df.to_numpy()
     if path.exists(data_path_ + file_name):
-        data = pd.read_excel(data_path_ + file_name, engine="xlrd")
-        data.to_csv(data_path_ + file_name[:-3] + "cvs", index=False)
+        df = pd.read_excel(data_path_ + file_name, engine="xlrd")
+        df.to_csv(data_path_ + file_name[:-3] + "csv", index=False)
         logging.info(" Read: " + file_name + " into memory")
-        return pd.read_csv(data_path_ + file_name[:-3] + "cvs", header=None, low_memory=False)
+        df = pd.read_csv(data_path_ + file_name[:-3] + "csv", header=None, low_memory=False)
+        return df, df.to_numpy()
 
 
 def unpack_dataset(file_name):

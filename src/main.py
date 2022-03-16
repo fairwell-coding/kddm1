@@ -24,8 +24,8 @@ def main():
     # _, jester_2 = read_xls_file("jester-data-2.xls")
     # _, jester_3 = read_xls_file("jester-data-3.xls")
 
-    data_proprocessed = __preprocess_data(jester_1)
-    test_data, train_data = __train_test_split(data_proprocessed)
+    data_preprocessed = __preprocess_data(jester_1)
+    test_data, train_data = __train_test_split(data_preprocessed)
     H, W = __nmf_scikit_learn(train_data)
     rmse = __evaluate_nmf_using_rmse(H, W, test_data)
 
@@ -52,14 +52,14 @@ def __evaluate_nmf_using_rmse(H, W, test_data):
     return rmse
 
 
-def __train_test_split(data_proprocessed):
-    top = data_proprocessed[:-NUM_TEST_ROWS]
-    bottom_left = data_proprocessed[-NUM_TEST_ROWS:, :-NUM_TEST_COLUMNS]
+def __train_test_split(data_preprocessed):
+    top = data_preprocessed[:-NUM_TEST_ROWS]  # All rows - Test_rows
+    bottom_left = data_preprocessed[-NUM_TEST_ROWS:, :-NUM_TEST_COLUMNS]
     bottom_right = np.full((NUM_TEST_ROWS, NUM_TEST_COLUMNS), np.nan)
     bottom = np.concatenate((bottom_left, bottom_right), axis=1)
     train_data = np.concatenate((top, bottom), axis=0)
 
-    test_data = data_proprocessed[-NUM_TEST_ROWS:, -NUM_TEST_COLUMNS:]
+    test_data = data_preprocessed[-NUM_TEST_ROWS:, -NUM_TEST_COLUMNS:]
 
     return test_data, train_data
 

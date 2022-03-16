@@ -64,14 +64,20 @@ def __train_test_split(data_preprocessed):
     return test_data, train_data
 
 
+def __normalize_dataset(dataset):
+    mean = np.nanmean(dataset, axis=1)[:, None]  # Mean joke rating per user
+    std = np.nanstd(dataset, axis=1)[:, None]  # standard deviation per user
+    dataset = (np.array(dataset) - mean)/std  # normalize
+    return dataset
+
+
 def __preprocess_data(dataset):
     dataset = dataset[1:, 1:]  # data cleaning: 1st sample has several invalid data inputs, e.g. '8.5.1'
     dataset = dataset.astype(float)  # convert joke ratings to float32
     dataset = np.where(dataset == 99, np.nan, dataset)  # set not-rated-jokes to NaN
-    dataset = normalize(dataset)  # normalize over feature dimensions (here not necessary)
-    dataset += 1  # normalized data lies within interval [-1, 1], hence we shift the data to the compact interval [0, 2]
+    dataset = __normalize_dataset(dataset)
+    # dataset += 1  # normalized data lies within interval [-1, 1], hence we shift the data to the compact interval [0, 2]
     # dataset += 10  # alternative: shift all joke ratings into positive number range
-
     return dataset
 
 

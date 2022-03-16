@@ -5,6 +5,7 @@ from sklearn.preprocessing import normalize
 
 from helper import unpack_dataset
 from helper import read_xls_file
+from helper import plot_joke_rating
 import logging
 
 NUM_TEST_COLUMNS = 10
@@ -25,6 +26,7 @@ def main():
     # _, jester_3 = read_xls_file("jester-data-3.xls")
 
     data_preprocessed = __preprocess_data(jester_1)
+    plot_joke_rating(data_preprocessed)
     test_data, train_data = __train_test_split(data_preprocessed)
     H, W = __nmf_scikit_learn(train_data)
     rmse = __evaluate_nmf_using_rmse(H, W, test_data)

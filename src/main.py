@@ -1,11 +1,10 @@
 import numpy as np
 from sklearn.decomposition import NMF
 from sklearn.metrics import mean_squared_error
-from sklearn.preprocessing import normalize
 
 from helper import unpack_dataset
 from helper import read_xls_file
-from helper import plot_joke_rating
+from src.plots import plot_joke_rating, plot_individual_joke_rating, plot_qq_individual_joke
 import logging
 
 NUM_TEST_COLUMNS = 10
@@ -26,7 +25,6 @@ def main():
     # _, jester_3 = read_xls_file("jester-data-3.xls")
 
     data_preprocessed = __preprocess_data(jester_1)
-    plot_joke_rating(data_preprocessed)
     test_data, train_data = __train_test_split(data_preprocessed)
     H, W = __nmf_scikit_learn(train_data)
     rmse = __evaluate_nmf_using_rmse(H, W, test_data)
@@ -77,6 +75,11 @@ def __preprocess_data(dataset):
     dataset = dataset[1:, 1:]  # data cleaning: 1st sample has several invalid data inputs, e.g. '8.5.1'
     dataset = dataset.astype(float)  # convert joke ratings to float32
     dataset = np.where(dataset == 99, np.nan, dataset)  # set not-rated-jokes to NaN
+
+    plot_individual_joke_rating(dataset[:,40], 40)
+    plot_qq_individual_joke(dataset[:,40], 40)
+    plot_joke_rating(dataset)
+
     dataset = __normalize_dataset(dataset)
     # dataset += 1  # normalized data lies within interval [-1, 1], hence we shift the data to the compact interval [0, 2]
     # dataset += 10  # alternative: shift all joke ratings into positive number range

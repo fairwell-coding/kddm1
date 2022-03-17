@@ -2,9 +2,6 @@ import zipfile
 import logging
 from os import path
 import pandas as pd
-import xlrd
-import matplotlib.pyplot as plt
-import numpy as np
 
 data_path_ = "../data/"
 
@@ -33,8 +30,3 @@ def unpack_dataset(file_name):
                 logging.info(" Unpacked: " + file)
 
 
-def plot_joke_rating(dataset):
-    data = np.nanmean(dataset, axis=0)
-    plt.bar(np.arange(100), data)
-    plt.show()
-    return

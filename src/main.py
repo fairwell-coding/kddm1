@@ -27,7 +27,9 @@ def main():
     data_preprocessed = __preprocess_data(jester_1)
     test_data, train_data = __train_test_split(data_preprocessed)
     H, W = __nmf_scikit_learn(train_data)
-    rmse = __evaluate_nmf_using_rmse(H, W, test_data)
+    M_hat = np.matmul(W, H)
+    y_hat = M_hat[-NUM_TEST_ROWS:, -NUM_TEST_COLUMNS:]
+    rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
 
     print('rmse: ', rmse)
 
@@ -44,11 +46,8 @@ def __nmf_scikit_learn(train_data):
     return H, W
 
 
-def __evaluate_nmf_using_rmse(H, W, test_data):
-    M_hat = np.matmul(W, H)
-    y_hat = M_hat[-NUM_TEST_ROWS:, -NUM_TEST_COLUMNS:]
+def __evaluate_nmf_using_rmse(y_hat, test_data):
     rmse = mean_squared_error(test_data, y_hat, squared=False)
-
     return rmse
 
 

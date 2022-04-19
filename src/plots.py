@@ -1,6 +1,6 @@
 import numpy as np
-from matplotlib import pyplot as plt
 import pylab
+from matplotlib import pyplot as plt
 from statsmodels.graphics.gofplots import qqplot
 
 
@@ -49,3 +49,21 @@ def plot_local_outlier_factor(data, data_scores):
     legend.legendHandles[1]._sizes = [20]
     plt.show()
 
+
+def plot_local_outlier_factor(data, data_scores):
+    plt.title("Local Outlier Factor (LOF)")
+    plt.scatter(data[:, 0], data[:, 1], color="k", s=3.0, label="Data points")
+    radius = (data_scores.max() - data_scores) / (data_scores.max() - data_scores.min())
+    plt.scatter(
+        data[:, 0],
+        data[:, 1],
+        s=1000 * radius,
+        edgecolors="r",
+        facecolors="none",
+        label="Outlier scores",
+    )
+    plt.axis("tight")
+    legend = plt.legend(loc="upper left")
+    legend.legendHandles[0]._sizes = [10]
+    legend.legendHandles[1]._sizes = [20]
+    plt.show()

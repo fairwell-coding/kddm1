@@ -1,10 +1,12 @@
 import numpy as np
 from sklearn.decomposition import NMF
+from sklearn.ensemble import IsolationForest
 from sklearn.metrics import mean_squared_error
+from sklearn.neighbors import LocalOutlierFactor
 
 from helper import unpack_dataset
 from helper import read_xls_file
-from src.plots import plot_joke_rating, plot_individual_joke_rating, plot_qq_individual_joke
+from src.plots import plot_joke_rating, plot_individual_joke_rating, plot_qq_individual_joke, plot_local_outlier_factor
 import logging
 
 NUM_TEST_COLUMNS = 10
@@ -32,6 +34,48 @@ def main():
     rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
 
     print('rmse: ', rmse)
+
+
+def __outlier_detection(preprocessed_data):
+    """
+    Handles the outlier detection
+
+    methods used:
+
+    * local outlier factor
+
+    :param preprocessed_data: data for outlier detection, must not contain NaN
+    """
+    __isolation_forest_outlier(preprocessed_data)
+    __local_outlier_factor(preprocessed_data)
+
+
+def __local_outlier_factor(preprocessed_data):
+    """
+    Plots the local outlier factor from the given data
+
+    :param preprocessed_data: data for outlier detection, must not contain NaN
+    """
+    n_neighbors = 20  # default value
+    clf = LocalOutlierFactor(n_neighbors=n_neighbors)
+    clf.fit_predict(preprocessed_data)
+    data_scores = clf.negative_outlier_factor_
+    plot_local_outlier_factor(preprocessed_data, data_scores)
+
+
+def __isolation_forest_outlier(preprocessed_data):
+    """
+    Prints how many outliers the IsolationForest classifier found in the given dataset
+
+    :param preprocessed_data:
+    """
+    clf = IsolationForest(random_state=RANDOM_STATE)
+    data_score = clf.fit_predict(preprocessed_data)
+
+    no_outliers = np.count_nonzero(data_score == -1)
+    no_correct_samples = np.count_nonzero(data_score == 1)
+    print("got", no_outliers, " outliers and", no_correct_samples,
+          " correct samples in the given data according to the IsolationForest classifier")
 
 
 def __nmf_scikit_learn(train_data):

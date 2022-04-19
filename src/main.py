@@ -43,6 +43,7 @@ def __outlier_detection(preprocessed_data):
     methods used:
 
     * local outlier factor
+    * IsolationForest
 
     :param preprocessed_data: data for outlier detection, must not contain NaN
     """
@@ -74,8 +75,8 @@ def __isolation_forest_outlier(preprocessed_data):
 
     no_outliers = np.count_nonzero(data_score == -1)
     no_correct_samples = np.count_nonzero(data_score == 1)
-    print("got", no_outliers, " outliers and", no_correct_samples,
-          " correct samples in the given data according to the IsolationForest classifier")
+    print("got", no_outliers, "outliers and", no_correct_samples,
+          "correct samples in the given data according to the IsolationForest classifier")
 
 
 def __nmf_scikit_learn(train_data):

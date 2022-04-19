@@ -1,6 +1,8 @@
 import zipfile
 import logging
 from os import path
+
+import numpy as np
 import pandas as pd
 
 data_path_ = "../data/"
@@ -30,3 +32,5 @@ def unpack_dataset(file_name):
                 logging.info(" Unpacked: " + file)
 
 
+def replace_nans(matrix, replace_with):
+    return np.where(np.isnan(matrix), replace_with, matrix)

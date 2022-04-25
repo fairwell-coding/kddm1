@@ -3,6 +3,7 @@ from sklearn.decomposition import NMF
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import mean_squared_error
 from sklearn.neighbors import LocalOutlierFactor
+from sklearn.preprocessing import MinMaxScaler
 
 from helper import unpack_dataset
 from helper import read_xls_file
@@ -14,9 +15,11 @@ NUM_TEST_ROWS = 1000
 
 RANDOM_STATE = 42
 
+USE_NMF = True
+
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     unpack_dataset("jester_dataset_1_1.zip")
     unpack_dataset("jester_dataset_1_2.zip")
@@ -26,8 +29,9 @@ def main():
     # _, jester_2 = read_xls_file("jester-data-2.xls")
     # _, jester_3 = read_xls_file("jester-data-3.xls")
 
-    data_preprocessed = __preprocess_data(jester_1)
-    test_data, train_data = __train_test_split(data_preprocessed)
+    data_preprocessed = __preprocess_data(jester_1, USE_NMF)
+    __outlier_detection(data_preprocessed)
+    test_data, train_data = __train_test_split(data_preprocessed, USE_NMF)
     H, W = __nmf_scikit_learn(train_data)
     M_hat = np.matmul(W, H)
     y_hat = M_hat[-NUM_TEST_ROWS:, -NUM_TEST_COLUMNS:]
@@ -96,10 +100,15 @@ def __evaluate_nmf_using_rmse(y_hat, test_data):
     return rmse
 
 
-def __train_test_split(data_preprocessed):
+def __train_test_split(data_preprocessed, use_nmf=True):
     top = data_preprocessed[:-NUM_TEST_ROWS]  # All rows - Test_rows
     bottom_left = data_preprocessed[-NUM_TEST_ROWS:, :-NUM_TEST_COLUMNS]
-    bottom_right = np.full((NUM_TEST_ROWS, NUM_TEST_COLUMNS), np.nan)
+    # if nmf is used fill now empty values with 0
+    if use_nmf is True:
+        bottom_right = np.full((NUM_TEST_ROWS, NUM_TEST_COLUMNS), 0)
+    else:
+        bottom_right = np.full((NUM_TEST_ROWS, NUM_TEST_COLUMNS), np.nan)
+
     bottom = np.concatenate((bottom_left, bottom_right), axis=1)
     train_data = np.concatenate((top, bottom), axis=0)
 
@@ -111,22 +120,35 @@ def __train_test_split(data_preprocessed):
 def __normalize_dataset(dataset):
     mean = np.nanmean(dataset, axis=1)[:, None]  # Mean joke rating per user
     std = np.nanstd(dataset, axis=1)[:, None]  # standard deviation per user
-    dataset = (np.array(dataset) - mean)/std  # normalize
+    dataset = (np.array(dataset) - mean) / std  # normalize
     return dataset
 
 
-def __preprocess_data(dataset):
+def __preprocess_data(dataset, use_nmf=True):
     dataset = dataset[1:, 1:]  # data cleaning: 1st sample has several invalid data inputs, e.g. '8.5.1'
     dataset = dataset.astype(float)  # convert joke ratings to float32
     dataset = np.where(dataset == 99, np.nan, dataset)  # set not-rated-jokes to NaN
 
-    plot_individual_joke_rating(dataset[:,40], 40)
-    plot_qq_individual_joke(dataset[:,40], 40)
-    plot_joke_rating(dataset)
-
-    dataset = __normalize_dataset(dataset)
+    # dataset = __normalize_dataset(dataset)
     # dataset += 1  # normalized data lies within interval [-1, 1], hence we shift the data to the compact interval [0, 2]
     # dataset += 10  # alternative: shift all joke ratings into positive number range
+
+    if use_nmf is True:
+        dataset = dataset - np.nanmean(dataset)  # center by mean
+        dataset = np.nan_to_num(dataset, nan=0.0)  # NaNs are now average rating
+        plot_individual_joke_rating(dataset[:, 40], '(40 after centering)')
+        plot_joke_rating(dataset, ' after centering')
+        min_value = np.nanmin(dataset)
+        # after centering the data by mean, some values might be out of the interval
+        # however nmf only accepts positive values, so we transform everything to [0,20]
+        print('min value(', min_value, ') in data after centering rating is out of interval, scaling interval')
+        scaler = MinMaxScaler(feature_range=(0, 20))
+        dataset = scaler.fit_transform(dataset)
+
+    plot_individual_joke_rating(dataset[:, 40], 40)
+    plot_qq_individual_joke(dataset[:, 40], 40)
+    plot_joke_rating(dataset)
+
     return dataset
 
 

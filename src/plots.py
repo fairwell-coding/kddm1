@@ -4,10 +4,10 @@ from matplotlib import pyplot as plt
 from statsmodels.graphics.gofplots import qqplot
 
 
-def plot_joke_rating(dataset):
+def plot_joke_rating(dataset, additional_text=''):
     fig = plt.figure()
     data = np.nanmean(dataset, axis=0)
-    fig.suptitle('Mean joke rating', fontsize=20)
+    fig.suptitle('Mean joke rating' + additional_text, fontsize=20)
     plt.xlabel('Joke')
     plt.ylabel('Mean rating')
     plt.bar(np.arange(100), data)

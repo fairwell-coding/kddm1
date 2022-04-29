@@ -6,12 +6,7 @@ from helper import unpack_dataset
 from helper import read_xls_file
 import logging
 
-from src.preprocessing import outlier_detection, train_test_split, preprocess_data
-
-NUM_TEST_COLUMNS = 10
-NUM_TEST_ROWS = 1000
-
-RANDOM_STATE = 42
+from src.preprocessing import outlier_detection, train_test_split, preprocess_data, get_evaluation_data, RANDOM_STATE
 
 USE_NMF = True
 
@@ -32,7 +27,7 @@ def main():
     test_data, train_data = train_test_split(data_preprocessed, USE_NMF)
     H, W = __nmf_scikit_learn(train_data)
     M_hat = np.matmul(W, H)
-    y_hat = M_hat[-NUM_TEST_ROWS:, -NUM_TEST_COLUMNS:]
+    y_hat = get_evaluation_data(M_hat)
     rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
 
     print('rmse: ', rmse)

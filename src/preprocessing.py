@@ -3,8 +3,11 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import MinMaxScaler
 
-from src.main import RANDOM_STATE, NUM_TEST_ROWS, NUM_TEST_COLUMNS
 from src.plots import plot_local_outlier_factor, plot_individual_joke_rating, plot_joke_rating, plot_qq_individual_joke
+
+RANDOM_STATE = 42
+NUM_TEST_COLUMNS = 10
+NUM_TEST_ROWS = 1000
 
 
 def outlier_detection(preprocessed_data):
@@ -100,3 +103,7 @@ def preprocess_data(dataset, use_nmf=True):
     plot_joke_rating(dataset)
 
     return dataset
+
+
+def get_evaluation_data(M_hat):
+    return M_hat[-NUM_TEST_ROWS:, -NUM_TEST_COLUMNS:]

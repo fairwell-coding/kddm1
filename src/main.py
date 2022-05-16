@@ -5,10 +5,10 @@ from sklearn.metrics import mean_squared_error
 from helper import unpack_dataset
 from helper import read_xls_file
 import logging
-
+from src.als import AlternatingLeastSquares
 from src.preprocessing import outlier_detection, train_test_split, preprocess_data, get_evaluation_data, RANDOM_STATE
 
-USE_NMF = True
+USE_NMF = False
 
 
 def main():
@@ -43,6 +43,17 @@ def __nmf_scikit_learn(train_data):
     H = nmf.components_
 
     return H, W
+
+
+def __als_from_lecture(train_data, test_data):
+    als = AlternatingLeastSquares(train_data, test_data)
+    als.train()
+    test = np.nan_to_num(test_data)
+    M_hat = als.predict()
+    y_hat = get_evaluation_data(M_hat)
+    als.plot_learning_curve()
+    rmse = als.compute_mse(test_data, y_hat)
+    print('rmse: ', rmse)
 
 
 def __evaluate_nmf_using_rmse(y_hat, test_data):

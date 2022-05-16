@@ -3,16 +3,17 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import mean_squared_error
 
 from src.helper import replace_nans
+from src.preprocessing import train_test_split
 
 NUM_TEST_COLUMNS = 10
 NUM_TEST_ROWS = 1000
 
 
 class AlternatingLeastSquares:
-    def __init__(self, train, test, num_features=10, num_iterations=10, learning_rate=0.001):
+    def __init__(self, train, test, num_features=20, num_iterations=100, learning_rate=0.001):
         self.num_users, self.num_items = train.shape
-        self.train_set = replace_nans(train, 0)
-        self.test_set = replace_nans(test, 0)
+        self.train_set = train
+        self.test_set = test
         self.num_features = num_features
         self.num_iterations = num_iterations
         self.learning_rate = learning_rate
@@ -23,9 +24,9 @@ class AlternatingLeastSquares:
 
     def train(self):
         for i in range(self.num_iterations):
-            self.U = self.calc_step(self.train_set, self.V)
-            self.V = self.calc_step(self.train_set.T, self.U)
-            pred_test, pred_train = self.split(self.predict())
+            self.U = self.calc_step(np.nan_to_num(self.train_set, 0), self.V)
+            self.V = self.calc_step(np.nan_to_num(self.train_set.T, 0), self.U)
+            pred_test, pred_train = train_test_split(self.predict())
             test_mse = self.compute_mse(self.test_set, pred_test)
             train_mse = self.compute_mse(self.train_set, pred_train)
             self.test_mse_record.append(test_mse)
@@ -38,18 +39,11 @@ class AlternatingLeastSquares:
     def predict(self):
         return self.U.dot(self.V.T)
 
-    def split(self, matrix):
-        top = matrix[:-NUM_TEST_ROWS]  # All rows - Test_rows
-        bottom_left = matrix[-NUM_TEST_ROWS:, :-NUM_TEST_COLUMNS]
-        bottom_right = np.full((NUM_TEST_ROWS, NUM_TEST_COLUMNS), np.nan)
-        bottom = np.concatenate((bottom_left, bottom_right), axis=1)
-        train_data = np.concatenate((top, bottom), axis=0)
-        test_data = matrix[-NUM_TEST_ROWS:, -NUM_TEST_COLUMNS:]
-        return test_data, train_data
-
     def compute_mse(self, y_true, y_pred):
-        mask = np.nonzero(y_true)
-        mse = mean_squared_error(y_true[mask], y_pred[mask], squared=False)
+        mask = np.isnan(y_true)
+        y_true = y_true[~mask]
+        y_pred = y_pred[~mask]
+        mse = mean_squared_error(y_true, y_pred, squared=False)
         return mse
 
     def plot_learning_curve(self):

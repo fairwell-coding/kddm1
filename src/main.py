@@ -23,14 +23,17 @@ def main():
     # _, jester_3 = read_xls_file("jester-data-3.xls")
 
     data_preprocessed = preprocess_data(jester_1, USE_NMF)
-    outlier_detection(data_preprocessed)
+    # outlier_detection(data_preprocessed)
     test_data, train_data = train_test_split(data_preprocessed, USE_NMF)
-    H, W = __nmf_scikit_learn(train_data)
-    M_hat = np.matmul(W, H)
-    y_hat = get_evaluation_data(M_hat)
-    rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
 
-    print('rmse: ', rmse)
+    __als_from_lecture(train_data, test_data)
+
+    # H, W = __nmf_scikit_learn(train_data)
+    # M_hat = np.matmul(W, H)
+    # y_hat = get_evaluation_data(M_hat)
+    # rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
+
+    # print('rmse: ', rmse)
 
 
 def __nmf_scikit_learn(train_data):
@@ -48,7 +51,6 @@ def __nmf_scikit_learn(train_data):
 def __als_from_lecture(train_data, test_data):
     als = AlternatingLeastSquares(train_data, test_data)
     als.train()
-    test = np.nan_to_num(test_data)
     M_hat = als.predict()
     y_hat = get_evaluation_data(M_hat)
     als.plot_learning_curve()

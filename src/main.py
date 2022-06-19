@@ -10,6 +10,15 @@ from src.preprocessing import outlier_detection, train_test_split, preprocess_da
 
 USE_NMF = True
 
+# Note from Flo:
+# in case we really wanna clean our data and remove outliers
+# don't think we wanna do that, because the user data where a suer 'voted against the mass' is quite valuable
+# for our algorithm, should break up the trend a bit, otherwise we might just add an additional bias by doing so
+# especially since both algorithm classify many points a outliers:
+# local outlier factor found 16515 outliers from 24982 data points
+# got 5110 outliers and 19872 correct samples in the given data according to the IsolationForest classifier
+REMOVE_OUTLIERS = False
+
 
 def main():
     logging.basicConfig(level=logging.INFO)
@@ -23,7 +32,10 @@ def main():
     # _, jester_3 = read_xls_file("jester-data-3.xls")
 
     data_preprocessed = preprocess_data(jester_1, USE_NMF)
-    outlier_detection(data_preprocessed)
+
+    # if outliers should be removed, use return value of outlier_detection
+    # and only use 1 of the 2 techniques outlier_detection contains both
+    outlier_detection(data_preprocessed, REMOVE_OUTLIERS)
     test_data, train_data = train_test_split(data_preprocessed, USE_NMF)
     H, W = __nmf_scikit_learn(train_data)
     M_hat = np.matmul(W, H)

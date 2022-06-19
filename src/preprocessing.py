@@ -10,7 +10,7 @@ NUM_TEST_COLUMNS = 10
 NUM_TEST_ROWS = 1000
 
 
-def outlier_detection(preprocessed_data):
+def outlier_detection(preprocessed_data, remove_outliers=False):
     """
     Handles the outlier detection
 
@@ -19,30 +19,45 @@ def outlier_detection(preprocessed_data):
     * local outlier factor
     * IsolationForest
 
+    :param remove_outliers: if outliers should be removed
     :param preprocessed_data: data for outlier detection, must not contain NaN
+
+    :return eiter the original data or the data with removed outliers
     """
-    __isolation_forest_outlier(preprocessed_data)
-    __local_outlier_factor(preprocessed_data)
+    isolation_forest_outlier(preprocessed_data, remove_outliers)
+    local_outlier_factor(preprocessed_data, remove_outliers)
 
 
-def __local_outlier_factor(preprocessed_data):
+def local_outlier_factor(preprocessed_data, remove_outliers=False):
     """
     Plots the local outlier factor from the given data
 
+    :param remove_outliers: if outliers should be removed
     :param preprocessed_data: data for outlier detection, must not contain NaN
+
+    :return eiter the original data or the data with removed outliers
     """
     n_neighbors = 20  # default value
     clf = LocalOutlierFactor(n_neighbors=n_neighbors)
-    clf.fit_predict(preprocessed_data)
+    is_inlier = clf.fit_predict(preprocessed_data)
     data_scores = clf.negative_outlier_factor_
     plot_local_outlier_factor(preprocessed_data, data_scores)
 
+    print('local outlier factor found', np.count_nonzero(is_inlier == -1), 'outliers from', np.count_nonzero(is_inlier), 'data points')
+    if remove_outliers is True:
+        outlier_index = np.where(is_inlier == -1)
+        cleaned_data = np.delete(preprocessed_data, outlier_index, axis=0)
+        return cleaned_data
 
-def __isolation_forest_outlier(preprocessed_data):
+    return preprocessed_data
+
+
+def isolation_forest_outlier(preprocessed_data, remove_outliers=False):
     """
     Prints how many outliers the IsolationForest classifier found in the given dataset
 
-    :param preprocessed_data:
+    :param remove_outliers: if the outliers should be removed
+    :param preprocessed_data: data for outlier detection, must not contain NaN
     """
     clf = IsolationForest(random_state=RANDOM_STATE)
     data_score = clf.fit_predict(preprocessed_data)
@@ -51,6 +66,13 @@ def __isolation_forest_outlier(preprocessed_data):
     no_correct_samples = np.count_nonzero(data_score == 1)
     print("got", no_outliers, "outliers and", no_correct_samples,
           "correct samples in the given data according to the IsolationForest classifier")
+
+    if remove_outliers is True:
+        outlier_index = np.where(data_score == -1)
+        cleaned_data = np.delete(preprocessed_data, outlier_index, axis=0)
+        return cleaned_data
+
+    return preprocessed_data
 
 
 def train_test_split(data_preprocessed, use_nmf=True):

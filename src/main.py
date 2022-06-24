@@ -7,6 +7,7 @@ from helper import read_xls_file
 import logging
 
 from src.preprocessing import outlier_detection, train_test_split, preprocess_data, get_evaluation_data, RANDOM_STATE
+from src.svd import __svd
 
 USE_NMF = True
 
@@ -30,6 +31,8 @@ def main():
     _, jester_1 = read_xls_file("jester-data-1.xls")
     # _, jester_2 = read_xls_file("jester-data-2.xls")
     # _, jester_3 = read_xls_file("jester-data-3.xls")
+
+    #__svd(jester_1)
 
     data_preprocessed = preprocess_data(jester_1, USE_NMF)
 

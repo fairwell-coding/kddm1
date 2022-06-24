@@ -1,15 +1,11 @@
 import numpy as np
 import surprise  # run 'pip install scikit-surprise' to install surprise
-from surprise import Reader, SVD, accuracy
+from surprise import Reader, SVD, accuracy, NMF
 from surprise.model_selection import cross_validate, train_test_split
 import pandas as pd
 
 
-def __svd(dataset):
-    print("--------------------------------------------------")
-    print("    START SVD with stochastic gradient descent    ")
-    print("--------------------------------------------------")
-
+def __svd_nmf_with_no_imputation(dataset):
     dataset = pd.DataFrame(dataset[1:, 1:])
     data = dataset.astype(float)
 
@@ -33,14 +29,36 @@ def __svd(dataset):
     epochs = 10
     train_set, validation_set = train_test_split(data, shuffle=True, test_size=.25)
 
+    print_seperator("    START SVD with stochastic gradient descent    ")
     algo = SVD(verbose=True, n_epochs=epochs)
+
     print("[Start] Fit SVD")
     algo.fit(train_set)
     print("[END] Fit SVD")
+
     predictions = algo.test(validation_set)
     print(f"RMSE for SVD with stochastic gradient descent for {epochs} epochs")
     accuracy.rmse(predictions, verbose=True)
 
+    print_seperator("     END SVD with stochastic gradient descent     ")
+
+
+    # Start of NMF
+    print_seperator("    START NMF with stochastic gradient descent    ")
+    algo = NMF(verbose=True, n_epochs=epochs)
+
+    print("[Start] Fit SVD")
+    algo.fit(train_set)
+    print("[END] Fit SVD")
+
+    predictions = algo.test(validation_set)
+    print(f"RMSE for SVD with stochastic gradient descent for {epochs} epochs")
+    accuracy.rmse(predictions, verbose=True)
+
+    print_seperator("     END NMF with stochastic gradient descent     ")
+
+
+def print_seperator(algo):
     print("--------------------------------------------------")
-    print("     END SVD with stochastic gradient descent     ")
+    print(algo)
     print("--------------------------------------------------")

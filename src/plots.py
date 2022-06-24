@@ -4,6 +4,17 @@ from matplotlib import pyplot as plt
 from statsmodels.graphics.gofplots import qqplot
 
 
+def plot_rating_distribution(dataset):
+    pass
+
+
+def plot_rating_per_item(dataset):
+    pass
+
+
+def plot_rating_per_user(dataset):
+    pass
+
 def plot_joke_rating(dataset, additional_text=''):
     fig = plt.figure()
     data = np.nanmean(dataset, axis=0)

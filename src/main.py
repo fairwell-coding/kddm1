@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.decomposition import NMF
+from sklearn.decomposition import NMF, TruncatedSVD
 from sklearn.metrics import mean_squared_error
 
 from helper import unpack_dataset
@@ -7,7 +7,7 @@ from helper import read_xls_file
 import logging
 
 from src.preprocessing import outlier_detection, train_test_split, preprocess_data, get_evaluation_data, RANDOM_STATE
-from src.svd import __svd
+from src.svd_nmf_no_imputation import __svd_nmf_with_no_imputation
 
 USE_NMF = True
 
@@ -32,7 +32,7 @@ def main():
     # _, jester_2 = read_xls_file("jester-data-2.xls")
     # _, jester_3 = read_xls_file("jester-data-3.xls")
 
-    #__svd(jester_1)
+    #__svd_nmf_with_no_imputation(jester_1)
 
     data_preprocessed = preprocess_data(jester_1, USE_NMF)
 
@@ -44,8 +44,26 @@ def main():
     M_hat = np.matmul(W, H)
     y_hat = get_evaluation_data(M_hat)
     rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
+    print('rmse: ', rmse)
+
+    print("SVD started")
+    H, W = __svd_scikit_learn(train_data)
+    M_hat = np.matmul(W, H)
+    y_hat = get_evaluation_data(M_hat)
+    rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
 
     print('rmse: ', rmse)
+
+
+def __svd_scikit_learn(train_data):
+    latent_space_dimensions = 50
+    num_epochs = 10
+
+    svd = TruncatedSVD(random_state=RANDOM_STATE, n_components=latent_space_dimensions, n_iter=num_epochs)
+    W = svd.fit_transform(train_data)
+    H = svd.components_
+
+    return H, W
 
 
 def __nmf_scikit_learn(train_data):

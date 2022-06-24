@@ -1,6 +1,7 @@
 import numpy as np
 import pylab
 from matplotlib import pyplot as plt
+from numpy import ndarray
 from statsmodels.graphics.gofplots import qqplot
 
 
@@ -14,6 +15,25 @@ def plot_rating_per_item(dataset):
 
 def plot_rating_per_user(dataset):
     pass
+
+
+def boxplot_rating_distribution(dataset):
+    data = dataset.flatten(order='C')
+    data = data[np.logical_not(np.isnan(data))]
+    fig1, ax1 = plt.subplots()
+    ax1.set_title('Distribution of Ratings')
+    ax1.boxplot(data)
+    plt.show()
+
+
+def distogram_rating_distribution(dataset):
+    data = dataset.flatten(order='C')
+    data = data[np.logical_not(np.isnan(data))]
+    fig1, ax1 = plt.subplots()
+    ax1.set_title('Distribution of Ratings')
+    ax1.hist(data, 40)
+    plt.show()
+
 
 def plot_joke_rating(dataset, additional_text=''):
     fig = plt.figure()

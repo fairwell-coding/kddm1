@@ -3,7 +3,8 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import MinMaxScaler
 
-from src.plots import plot_local_outlier_factor, plot_individual_joke_rating, plot_joke_rating, plot_qq_individual_joke
+from src.plots import plot_local_outlier_factor, plot_individual_joke_rating, plot_joke_rating, plot_qq_individual_joke, \
+    boxplot_rating_distribution, distogram_rating_distribution
 
 RANDOM_STATE = 42
 NUM_TEST_COLUMNS = 10
@@ -104,6 +105,8 @@ def preprocess_data(dataset, use_nmf=True):
     dataset = dataset.astype(float)  # convert joke ratings to float32
     dataset = np.where(dataset == 99, np.nan, dataset)  # set not-rated-jokes to NaN
 
+    boxplot_rating_distribution(dataset)
+    distogram_rating_distribution(dataset)
     # dataset = __normalize_dataset(dataset)
     # dataset += 1  # normalized data lies within interval [-1, 1], hence we shift the data to the compact interval [0, 2]
     # dataset += 10  # alternative: shift all joke ratings into positive number range

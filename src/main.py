@@ -6,10 +6,11 @@ from helper import unpack_dataset
 from helper import read_xls_file
 import logging
 
-from src.preprocessing import outlier_detection, train_test_split, preprocess_data, get_evaluation_data, RANDOM_STATE
+from src.preprocessing import outlier_detection, train_test_split, preprocess_data, get_evaluation_data, RANDOM_STATE, \
+    prepare_data
 from src.svd_nmf_no_imputation import __svd_nmf_with_no_imputation
 
-USE_NMF = True
+PREPROCESS_DATA = True
 
 # Note from Flo:
 # in case we really wanna clean our data and remove outliers
@@ -34,25 +35,52 @@ def main():
 
     #__svd_nmf_with_no_imputation(jester_1)
 
-    data_preprocessed = preprocess_data(jester_1, USE_NMF)
+    # !!! data_prepared contains NaNs !!!
+    data_prepared = prepare_data(jester_1)
 
     # if outliers should be removed, use return value of outlier_detection
     # and only use 1 of the 2 techniques outlier_detection contains both
-    outlier_detection(data_preprocessed, REMOVE_OUTLIERS)
-    test_data, train_data = train_test_split(data_preprocessed, USE_NMF)
+    # Flo: removed outlier detection from workflow, because we not gonna use it anyway
+    # and algorithms cant work with NaNs
+    # outlier_detection(data_prepared, REMOVE_OUTLIERS)
+    rmse = process_data_with_nmf(data_prepared)
+    print('rmse for NMF:', rmse)
+
+    rmse = process_data_with_svd(data_prepared)
+    print('rmse for SVD: ', rmse)
+
+
+def process_data_with_nmf(dataset):
+    print('NMF started')
+    if PREPROCESS_DATA is True:
+        data_preprocessed = preprocess_data(dataset)
+    else:
+        # just replace NaNs and move data to positive interval
+        data_preprocessed = np.nan_to_num(dataset, nan=0.0)
+        data_preprocessed = data_preprocessed + 10
+
+    test_data, train_data = train_test_split(data_preprocessed, fill_test_data_with_zero=True)
     H, W = __nmf_scikit_learn(train_data)
     M_hat = np.matmul(W, H)
     y_hat = get_evaluation_data(M_hat)
     rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
-    print('rmse: ', rmse)
+    return rmse
 
+
+def process_data_with_svd(dataset):
     print("SVD started")
+    if PREPROCESS_DATA is True:
+        data_preprocessed = preprocess_data(dataset)
+    else:
+        # just replace NaNs with 0
+        data_preprocessed = np.nan_to_num(dataset, nan=0.0)
+
+    test_data, train_data = train_test_split(data_preprocessed, fill_test_data_with_zero=True)
     H, W = __svd_scikit_learn(train_data)
     M_hat = np.matmul(W, H)
     y_hat = get_evaluation_data(M_hat)
     rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
-
-    print('rmse: ', rmse)
+    return rmse
 
 
 def __svd_scikit_learn(train_data):

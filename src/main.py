@@ -73,7 +73,7 @@ def process_data_with_nmf(dataset):
 def process_data_with_svd(dataset):
     print("SVD started")
     if PREPROCESS_DATA is True:
-        data_preprocessed = preprocess_data(dataset)
+        data_preprocessed = preprocess_data(dataset, scale_to_positive_interval=False)
     else:
         # just replace NaNs with 0
         data_preprocessed = np.nan_to_num(dataset, nan=0.0)

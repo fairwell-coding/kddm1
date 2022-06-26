@@ -1,14 +1,14 @@
+import logging
+
 import numpy as np
 from sklearn.decomposition import NMF, TruncatedSVD
 from sklearn.metrics import mean_squared_error
 
-from helper import unpack_dataset
 from helper import read_xls_file
-import logging
-
-from light_gcn_custom import process_data_with_light_gcn
+from helper import unpack_dataset
 from src.preprocessing import train_test_split, preprocess_data, get_evaluation_data, RANDOM_STATE, \
     prepare_data
+from src.scikit_learn_nan import evaluate_nmf_using_rmse_with_nans
 
 PREPROCESS_DATA = True
 
@@ -25,9 +25,9 @@ REMOVE_OUTLIERS = False
 def main():
     logging.basicConfig(level=logging.INFO)
 
-    unpack_dataset("jester_dataset_1_1.zip")
-    unpack_dataset("jester_dataset_1_2.zip")
-    unpack_dataset("jester_dataset_1_3.zip")
+    # unpack_dataset("jester_dataset_1_1.zip")
+    # unpack_dataset("jester_dataset_1_2.zip")
+    # unpack_dataset("jester_dataset_1_3.zip")
 
     _, jester_1 = read_xls_file("jester-data-1.xls")
     # _, jester_2 = read_xls_file("jester-data-2.xls")
@@ -54,11 +54,12 @@ def main():
 
 
 def process_data_with_nmf(dataset):
-    print('NMF started')
+
     if PREPROCESS_DATA is True:
-        data_preprocessed = preprocess_data(dataset)
+        data_preprocessed, nan_mask = preprocess_data(dataset)
     else:
         # just replace NaNs and move data to positive interval
+        _, nan_mask = preprocess_data(dataset)
         data_preprocessed = np.nan_to_num(dataset, nan=0.0)
         data_preprocessed = data_preprocessed + 10
 
@@ -66,23 +67,28 @@ def process_data_with_nmf(dataset):
     H, W = __nmf_scikit_learn(train_data)
     M_hat = np.matmul(W, H)
     y_hat = get_evaluation_data(M_hat)
-    rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
+    y_hat = np.where(nan_mask, y_hat, np.nan)
+    test_data = np.where(nan_mask, test_data, np.nan)
+    rmse = evaluate_nmf_using_rmse_with_nans(y_hat, test_data)
     return rmse
 
 
 def process_data_with_svd(dataset):
     print("SVD started")
     if PREPROCESS_DATA is True:
-        data_preprocessed = preprocess_data(dataset, scale_to_positive_interval=False)
+        data_preprocessed, nan_mask = preprocess_data(dataset, scale_to_positive_interval=False)
     else:
         # just replace NaNs with 0
+        _, nan_mask = preprocess_data(dataset)
         data_preprocessed = np.nan_to_num(dataset, nan=0.0)
 
     test_data, train_data = train_test_split(data_preprocessed, fill_test_data_with_zero=True)
     H, W = __svd_scikit_learn(train_data)
     M_hat = np.matmul(W, H)
     y_hat = get_evaluation_data(M_hat)
-    rmse = __evaluate_nmf_using_rmse(y_hat, test_data)
+    y_hat = np.where(nan_mask, y_hat, np.nan)
+    test_data = np.where(nan_mask, test_data, np.nan)
+    rmse = evaluate_nmf_using_rmse_with_nans(y_hat, test_data)
     return rmse
 
 
@@ -99,7 +105,7 @@ def __svd_scikit_learn(train_data):
 
 def __nmf_scikit_learn(train_data):
     latent_space_dimensions = 50
-    num_epochs = 2000
+    num_epochs = 100
     init_method = 'nndsvd'
 
     nmf = NMF(random_state=RANDOM_STATE, init=init_method, n_components=latent_space_dimensions, max_iter=num_epochs)

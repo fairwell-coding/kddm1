@@ -116,25 +116,24 @@ def preprocess_data(dataset, scale_to_positive_interval=True):
     # dataset = __normalize_dataset(dataset)
     # dataset += 1  # normalized data lies within interval [-1, 1], hence we shift the data to the compact interval [0, 2]
     # dataset += 10  # alternative: shift all joke ratings into positive number range
-
+    nan_mask = np.invert(np.isnan(dataset))
     dataset = dataset - np.nanmean(dataset)  # center by mean
     dataset = np.nan_to_num(dataset, nan=0.0)  # NaNs are now average rating
     plot_individual_joke_rating(dataset[:, 40], '(40 after centering)')
     plot_joke_rating(dataset, ' after centering')
+    min_value = np.nanmin(dataset)
+    # after centering the data by mean, some values might be out of the interval
+    # however nmf only accepts positive values, so we transform everything to [0,20]
 
     if scale_to_positive_interval is True:
-        min_value = np.nanmin(dataset)
-        # after centering the data by mean, some values might be out of the interval
-        # however nmf only accepts positive values, so we transform everything to [0,20]
         print('min value(', min_value, ') in data after centering rating is out of interval, scaling interval')
-        scaler = MinMaxScaler(feature_range=(0, 20))
-        dataset = scaler.fit_transform(dataset)
+        dataset += -min_value
 
     plot_individual_joke_rating(dataset[:, 40], 40)
     plot_qq_individual_joke(dataset[:, 40], 40)
     plot_joke_rating(dataset)
 
-    return dataset
+    return dataset, get_evaluation_data(nan_mask)
 
 
 def get_evaluation_data(M_hat):

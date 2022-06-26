@@ -6,9 +6,9 @@ from helper import unpack_dataset
 from helper import read_xls_file
 import logging
 
-from src.preprocessing import outlier_detection, train_test_split, preprocess_data, get_evaluation_data, RANDOM_STATE, \
+from light_gcn_custom import process_data_with_light_gcn
+from src.preprocessing import train_test_split, preprocess_data, get_evaluation_data, RANDOM_STATE, \
     prepare_data
-from src.svd_nmf_no_imputation import __svd_nmf_with_no_imputation
 
 PREPROCESS_DATA = True
 
@@ -36,18 +36,21 @@ def main():
     #__svd_nmf_with_no_imputation(jester_1)
 
     # !!! data_prepared contains NaNs !!!
-    data_prepared = prepare_data(jester_1)
+    data_prepared = prepare_data(jester_1, False)
 
     # if outliers should be removed, use return value of outlier_detection
     # and only use 1 of the 2 techniques outlier_detection contains both
     # Flo: removed outlier detection from workflow, because we not gonna use it anyway
     # and algorithms cant work with NaNs
     # outlier_detection(data_prepared, REMOVE_OUTLIERS)
+
     rmse = process_data_with_nmf(data_prepared)
     print('rmse for NMF:', rmse)
 
     rmse = process_data_with_svd(data_prepared)
     print('rmse for SVD: ', rmse)
+
+    # process_data_with_light_gcn(data_prepared)
 
 
 def process_data_with_nmf(dataset):

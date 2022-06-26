@@ -100,13 +100,14 @@ def __normalize_dataset(dataset):
     return dataset
 
 
-def prepare_data(dataset):
+def prepare_data(dataset, create_plots):
     dataset = dataset[1:, 1:]  # data cleaning: 1st sample has several invalid data inputs, e.g. '8.5.1'
     dataset = dataset.astype(float)  # convert joke ratings to float32
     dataset = np.where(dataset == 99, np.nan, dataset)  # set not-rated-jokes to NaN
 
-    boxplot_rating_distribution(dataset)
-    distogram_rating_distribution(dataset)
+    if create_plots:
+        boxplot_rating_distribution(dataset)
+        distogram_rating_distribution(dataset)
 
     return dataset
 

@@ -3,14 +3,15 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import MinMaxScaler
 
-from src.plots import plot_local_outlier_factor, plot_individual_joke_rating, plot_joke_rating, plot_qq_individual_joke
+from src.plots import plot_local_outlier_factor, plot_individual_joke_rating, plot_joke_rating, plot_qq_individual_joke, \
+    boxplot_rating_distribution, distogram_rating_distribution
 
 RANDOM_STATE = 42
 NUM_TEST_COLUMNS = 10
 NUM_TEST_ROWS = 1000
 
 
-def outlier_detection(preprocessed_data):
+def outlier_detection(preprocessed_data, remove_outliers=False):
     """
     Handles the outlier detection
 
@@ -19,30 +20,45 @@ def outlier_detection(preprocessed_data):
     * local outlier factor
     * IsolationForest
 
+    :param remove_outliers: if outliers should be removed
     :param preprocessed_data: data for outlier detection, must not contain NaN
+
+    :return eiter the original data or the data with removed outliers
     """
-    __isolation_forest_outlier(preprocessed_data)
-    __local_outlier_factor(preprocessed_data)
+    isolation_forest_outlier(preprocessed_data, remove_outliers)
+    local_outlier_factor(preprocessed_data, remove_outliers)
 
 
-def __local_outlier_factor(preprocessed_data):
+def local_outlier_factor(preprocessed_data, remove_outliers=False):
     """
     Plots the local outlier factor from the given data
 
+    :param remove_outliers: if outliers should be removed
     :param preprocessed_data: data for outlier detection, must not contain NaN
+
+    :return eiter the original data or the data with removed outliers
     """
     n_neighbors = 20  # default value
     clf = LocalOutlierFactor(n_neighbors=n_neighbors)
-    clf.fit_predict(preprocessed_data)
+    is_inlier = clf.fit_predict(preprocessed_data)
     data_scores = clf.negative_outlier_factor_
     plot_local_outlier_factor(preprocessed_data, data_scores)
 
+    print('local outlier factor found', np.count_nonzero(is_inlier == -1), 'outliers from', np.count_nonzero(is_inlier), 'data points')
+    if remove_outliers is True:
+        outlier_index = np.where(is_inlier == -1)
+        cleaned_data = np.delete(preprocessed_data, outlier_index, axis=0)
+        return cleaned_data
 
-def __isolation_forest_outlier(preprocessed_data):
+    return preprocessed_data
+
+
+def isolation_forest_outlier(preprocessed_data, remove_outliers=False):
     """
     Prints how many outliers the IsolationForest classifier found in the given dataset
 
-    :param preprocessed_data:
+    :param remove_outliers: if the outliers should be removed
+    :param preprocessed_data: data for outlier detection, must not contain NaN
     """
     clf = IsolationForest(random_state=RANDOM_STATE)
     data_score = clf.fit_predict(preprocessed_data)
@@ -52,12 +68,19 @@ def __isolation_forest_outlier(preprocessed_data):
     print("got", no_outliers, "outliers and", no_correct_samples,
           "correct samples in the given data according to the IsolationForest classifier")
 
+    if remove_outliers is True:
+        outlier_index = np.where(data_score == -1)
+        cleaned_data = np.delete(preprocessed_data, outlier_index, axis=0)
+        return cleaned_data
 
-def train_test_split(data_preprocessed, use_nmf=True):
+    return preprocessed_data
+
+
+def train_test_split(data_preprocessed, fill_test_data_with_zero=True):
     top = data_preprocessed[:-NUM_TEST_ROWS]  # All rows - Test_rows
     bottom_left = data_preprocessed[-NUM_TEST_ROWS:, :-NUM_TEST_COLUMNS]
     # if nmf is used fill now empty values with 0
-    if use_nmf is True:
+    if fill_test_data_with_zero is True:
         bottom_right = np.full((NUM_TEST_ROWS, NUM_TEST_COLUMNS), 0)
     else:
         bottom_right = np.full((NUM_TEST_ROWS, NUM_TEST_COLUMNS), np.nan)
@@ -77,32 +100,40 @@ def __normalize_dataset(dataset):
     return dataset
 
 
-def preprocess_data(dataset, use_nmf=True, plot_stats=False):
+def prepare_data(dataset, create_plots):
     dataset = dataset[1:, 1:]  # data cleaning: 1st sample has several invalid data inputs, e.g. '8.5.1'
     dataset = dataset.astype(float)  # convert joke ratings to float32
     dataset = np.where(dataset == 99, np.nan, dataset)  # set not-rated-jokes to NaN
 
+    if create_plots:
+        boxplot_rating_distribution(dataset)
+        distogram_rating_distribution(dataset)
+
+    return dataset
+
+
+def preprocess_data(dataset, scale_to_positive_interval=True):
     # dataset = __normalize_dataset(dataset)
     # dataset += 1  # normalized data lies within interval [-1, 1], hence we shift the data to the compact interval [0, 2]
     # dataset += 10  # alternative: shift all joke ratings into positive number range
-    if use_nmf is True:
-        dataset = dataset - np.nanmean(dataset)  # center by mean
-        dataset = np.nan_to_num(dataset, nan=0.0)  # NaNs are now average rating
-        if plot_stats is True:
-            plot_individual_joke_rating(dataset[:, 40], '(40 after centering)')
-            plot_joke_rating(dataset, ' after centering')
-        min_value = np.nanmin(dataset)
-        # after centering the data by mean, some values might be out of the interval
-        # however nmf only accepts positive values, so we transform everything to [0,20]
-        print('min value(', min_value, ') in data after centering rating is out of interval, scaling interval')
-        scaler = MinMaxScaler(feature_range=(0, 20))
-        dataset = scaler.fit_transform(dataset)
-    if plot_stats is True:
-        plot_individual_joke_rating(dataset[:, 40], 40)
-        plot_qq_individual_joke(dataset[:, 40], 40)
-        plot_joke_rating(dataset)
+    nan_mask = np.invert(np.isnan(dataset))
+    dataset = dataset - np.nanmean(dataset)  # center by mean
+    dataset = np.nan_to_num(dataset, nan=0.0)  # NaNs are now average rating
+    plot_individual_joke_rating(dataset[:, 40], '(40 after centering)')
+    plot_joke_rating(dataset, ' after centering')
+    min_value = np.nanmin(dataset)
+    # after centering the data by mean, some values might be out of the interval
+    # however nmf only accepts positive values, so we transform everything to [0,20]
 
-    return dataset
+    if scale_to_positive_interval is True:
+        print('min value(', min_value, ') in data after centering rating is out of interval, scaling interval')
+        dataset += -min_value
+
+    plot_individual_joke_rating(dataset[:, 40], 40)
+    plot_qq_individual_joke(dataset[:, 40], 40)
+    plot_joke_rating(dataset)
+
+    return dataset, get_evaluation_data(nan_mask)
 
 
 def get_evaluation_data(M_hat):
